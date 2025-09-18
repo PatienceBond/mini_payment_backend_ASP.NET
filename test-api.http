@@ -1,0 +1,89 @@
+### Test Mini Payment Gateway API
+
+### Variables
+@baseUrl = https://localhost:7000
+@apiUrl = {{baseUrl}}/api/payments
+
+### 1. Create a successful payment (even last digit)
+POST {{apiUrl}}
+Content-Type: application/json
+
+{
+  "cardNumber": "4111111111111112",
+  "expiryMonth": 12,
+  "expiryYear": 2025,
+  "cvv": "123",
+  "amount": 100.50,
+  "currencyCode": "USD"
+}
+
+### 2. Create a failed payment (odd last digit)
+POST {{apiUrl}}
+Content-Type: application/json
+
+{
+  "cardNumber": "4111111111111111",
+  "expiryMonth": 12,
+  "expiryYear": 2025,
+  "cvv": "123",
+  "amount": 250.00,
+  "currencyCode": "EUR"
+}
+
+### 3. Create another successful payment
+POST {{apiUrl}}
+Content-Type: application/json
+
+{
+  "cardNumber": "5555555555554444",
+  "expiryMonth": 6,
+  "expiryYear": 2026,
+  "cvv": "456",
+  "amount": 75.25,
+  "currencyCode": "GBP"
+}
+
+### 4. Get all transactions
+GET {{apiUrl}}
+
+### 5. Get specific transaction (replace with actual transaction ID from step 1)
+GET {{apiUrl}}/REPLACE_WITH_TRANSACTION_ID
+
+### 6. Test validation - expired card
+POST {{apiUrl}}
+Content-Type: application/json
+
+{
+  "cardNumber": "4111111111111112",
+  "expiryMonth": 1,
+  "expiryYear": 2020,
+  "cvv": "123",
+  "amount": 100.00,
+  "currencyCode": "USD"
+}
+
+### 7. Test validation - invalid amount
+POST {{apiUrl}}
+Content-Type: application/json
+
+{
+  "cardNumber": "4111111111111112",
+  "expiryMonth": 12,
+  "expiryYear": 2025,
+  "cvv": "123",
+  "amount": 0,
+  "currencyCode": "USD"
+}
+
+### 8. Test validation - missing fields
+POST {{apiUrl}}
+Content-Type: application/json
+
+{
+  "cardNumber": "",
+  "expiryMonth": 12,
+  "expiryYear": 2025,
+  "cvv": "123",
+  "amount": 100.00,
+  "currencyCode": "USD"
+}
