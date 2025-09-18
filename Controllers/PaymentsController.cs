@@ -42,6 +42,11 @@ namespace MiniPaymentGateway.Controllers
                 _logger.LogWarning("Payment validation failed: {Message}", ex.Message);
                 return BadRequest(new { error = ex.Message });
             }
+            catch (InvalidOperationException ex)
+            {
+                _logger.LogWarning("Payment failed due to business rule: {Message}", ex.Message);
+                return BadRequest(new { error = ex.Message });
+            }
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Error creating payment");

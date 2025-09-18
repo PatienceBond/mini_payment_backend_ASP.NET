@@ -28,6 +28,11 @@ namespace MiniPaymentGateway.Services
             // Validate payment request
             ValidatePaymentRequest(paymentRequest);
 
+            // Check if amount ends in odd number
+            var amountString = paymentRequest.Amount.ToString("F2");
+            var lastDigit = amountString.Replace(".", "").LastOrDefault();
+            var isOddAmount = char.IsDigit(lastDigit) && (lastDigit - '0') % 2 == 1;
+
             // Create PaymentRequest entity
             var paymentRequestEntity = new PaymentRequest
             {
@@ -42,10 +47,22 @@ namespace MiniPaymentGateway.Services
             _context.PaymentRequests.Add(paymentRequestEntity);
             await _context.SaveChangesAsync();
 
-            // Process payment with bank
-            var bankResponse = await _bankService.ProcessPaymentAsync(paymentRequest);
+            // Process payment with bank (only if amount doesn't end in odd number)
+            BankResponse bankResponse;
+            if (isOddAmount)
+            {
+                bankResponse = new BankResponse
+                {
+                    Status = "Failed",
+                    Message = "Payment declined - amount ending in odd number not allowed"
+                };
+            }
+            else
+            {
+                bankResponse = await _bankService.ProcessPaymentAsync(paymentRequest);
+            }
 
-            // Create Transaction entity
+            // Create Transaction entity (always store transaction regardless of odd amount validation)
             var transaction = new Transaction
             {
                 PaymentRequestId = paymentRequestEntity.Id,
@@ -56,6 +73,12 @@ namespace MiniPaymentGateway.Services
 
             _context.Transactions.Add(transaction);
             await _context.SaveChangesAsync();
+
+            // Return error response for odd amounts but still provide transaction ID
+            if (isOddAmount)
+            {
+                throw new InvalidOperationException($"Payment failed: {bankResponse.Message}. Transaction ID: {transaction.Id}");
+            }
 
             return new PaymentResponseDto
             {
